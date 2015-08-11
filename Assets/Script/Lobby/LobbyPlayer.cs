@@ -5,20 +5,24 @@ using System.Collections;
 using System.Collections.Generic;
 //using System.Linq;
 
-namespace UnityStandardAssets.Network
+namespace Networking.Network
 {
     public class LobbyPlayer : NetworkLobbyPlayer
     {
+        #region Field 
+
         static Color[] Colors = new Color[] { Color.red, Color.magenta, Color.cyan, Color.blue, Color.green, Color.yellow };
 
         public Button colorButton;
         public InputField nameInput;
         public Button readyButton;
         public Button waitingPlayerButton;
+        public Button m_TestBtn;
 
         //OnMyName function will be invoked on clients when server change the value of playerName
         [SyncVar(hook = "OnMyName")]
         public string playerName = "";
+
         [SyncVar(hook = "OnMyColor")]
         public Color playerColor = Color.white;
 
@@ -30,8 +34,29 @@ namespace UnityStandardAssets.Network
         static Color OtherPlayerColor = new Color(250.0f / 255.0f, 250.0f / 255.0f, 250.0f / 255.0f, 1.0f);
         static Color LocalPlayerColor = new Color(180.0f / 255.0f, 180.0f / 255.0f, 180.0f / 255.0f, 1.0f);
 
+        #endregion
+
+        #region Unity Event
+
+        void Awake()
+        {
+            m_TestBtn.onClick.AddListener(OnTest);
+        }
+
+        void OnDestroy()
+        {
+            m_TestBtn.onClick.RemoveListener(OnTest);
+        }
+
+        #endregion
+
+        #region Override 
+
+        /// <summary>Called when the client connects to a server</summary>
         public override void OnStartClient()
         {
+            Debug.Log("OnStartClient");
+            
             //All networkbehaviour base function don't do anything
             //but NetworkLobbyPlayer redefine OnStartClient, so we need to call it here
             base.OnStartClient();
@@ -40,28 +65,22 @@ namespace UnityStandardAssets.Network
             //will be created with the right value currently on server
             OnMyName(playerName);
             OnMyColor(playerColor);
+            HookTest(testData);
         }
 
-        //====== Client RPC
-        public void RpcToggleJoinButton(bool enabled)
-        {
-            //readyButton.gameObject.SetActive(enabled);
-            //waitingPlayerButton.gameObject.SetActive(!enabled);
-        }
-
+        /// <summary>This is a hook that is invoked on all player objects when entering the lobby</summary>
         public override void OnClientEnterLobby()
         {
-            Debug.Log("OnClientEnterLobby");
+            Debug.Log("OnClientEnterLobby:" + isLocalPlayer);
 
             base.OnClientEnterLobby();
-            
+
             LobbyPlayerList._instance.AddPlayer(this);
-            
-            //LobbyPlayerList._instance.DisplayDirectServerWarning(isServer && LobbyManager.s_Singleton.matchMaker == null);
+            LobbyPlayerList._instance.DisplayDirectServerWarning(isServer && LobbyManager.s_Singleton.matchMaker == null);
 
             //if we return from a game, color of text can still be the one for "Ready"
             readyButton.transform.GetChild(0).GetComponent<Text>().color = Color.white;
-            
+
             if (isLocalPlayer)
             {
                 SetupLocalPlayer();
@@ -76,47 +95,34 @@ namespace UnityStandardAssets.Network
             OnMyName(playerName);
             OnMyColor(playerColor);
         }
-
-        private void ChangeReadyButtonColor(Color c)
+        
+        public override void OnClientReady(bool readyState)
         {
-            ColorBlock b = readyButton.colors;
-            b.normalColor = c;
-            b.pressedColor = c;
-            b.highlightedColor = c;
-            b.disabledColor = c;
+            Debug.Log("OnClientReady:" + readyState + " playerName => " + playerName);
 
-            readyButton.colors = b;
+            if (readyState)
+            {
+                ChangeReadyButtonColor(TransparentColor);
+
+                Text textComponent = readyButton.transform.GetChild(0).GetComponent<Text>();
+                textComponent.text = "READY";
+                textComponent.color = ReadyColor;
+
+                readyButton.interactable = isLocalPlayer;
+            }
+            else
+            {
+                ChangeReadyButtonColor(isLocalPlayer ? JoinColor : NotReadyColor);
+
+                Text textComponent = readyButton.transform.GetChild(0).GetComponent<Text>();
+                textComponent.text = isLocalPlayer ? "JOIN" : "...";
+                textComponent.color = Color.white;
+
+                readyButton.interactable = isLocalPlayer;
+            }
         }
 
-        private void SetupOtherPlayer()
-        {
-            nameInput.interactable = false;
-
-            GetComponent<Image>().color = OtherPlayerColor;
-
-            if (playerColor == Color.white)
-                CmdColorChange(slot);
-
-            ChangeReadyButtonColor(NotReadyColor);
-
-            readyButton.transform.GetChild(0).GetComponent<Text>().text = "...";
-            readyButton.interactable = false;
-
-            OnClientReady(false);
-        }
-
-        private void SetupLocalPlayer()
-        {
-            nameInput.interactable = true;
-
-            GetComponent<Image>().color = LocalPlayerColor;
-
-            ChangeReadyButtonColor(JoinColor);
-
-            readyButton.transform.GetChild(0).GetComponent<Text>().text = "JOIN";
-            readyButton.interactable = true;
-        }
-
+        /// <summary>Called when the local player object has been set up</summary>
         public override void OnStartLocalPlayer()
         {
             Debug.Log("OnStartLocalPlayer");
@@ -144,49 +150,69 @@ namespace UnityStandardAssets.Network
 
             SetupLocalPlayer();
         }
-        
-        public override void OnClientReady(bool readyState)
+
+        #endregion
+
+        #region Other
+
+        public void RpcToggleJoinButton(bool enabled)
         {
-            Debug.Log("OnClientReady:"+ readyState);
-
-            if (readyState)
-            {
-                ChangeReadyButtonColor(TransparentColor);
-
-                Text textComponent = readyButton.transform.GetChild(0).GetComponent<Text>();
-                textComponent.text = "READY";
-                textComponent.color = ReadyColor;
-
-                readyButton.interactable = isLocalPlayer;
-            }
-            else
-            {
-                ChangeReadyButtonColor(isLocalPlayer ? JoinColor : NotReadyColor);
-
-                Text textComponent = readyButton.transform.GetChild(0).GetComponent<Text>();
-                textComponent.text = isLocalPlayer ? "JOIN" : "...";
-                textComponent.color = Color.white;
-
-                readyButton.interactable = isLocalPlayer;
-            }
+            readyButton.gameObject.SetActive(enabled);
+            waitingPlayerButton.gameObject.SetActive(!enabled);
         }
 
-        ///===== callback from sync var
-
-        public void OnMyName(string newName)
+        /// <summary>更新準備鈕顏色</summary>
+        private void ChangeReadyButtonColor(Color c)
         {
-            playerName = newName;
-            //nameDisp.text = playerName;
-            nameInput.text = playerName;
+            ColorBlock b = readyButton.colors;
+            b.normalColor = c;
+            b.pressedColor = c;
+            b.highlightedColor = c;
+            b.disabledColor = c;
+
+            readyButton.colors = b;
         }
 
-        public void OnMyColor(Color newColor)
+        /// <summary>設定本地玩家物件</summary>
+        private void SetupLocalPlayer()
         {
-            playerColor = newColor;
-            colorButton.GetComponent<Image>().color = newColor;
+            nameInput.interactable = true;
+
+            GetComponent<Image>().color = LocalPlayerColor;
+
+            ChangeReadyButtonColor(JoinColor);
+
+            readyButton.transform.GetChild(0).GetComponent<Text>().text = "JOIN";
+            readyButton.interactable = true;
         }
 
-        //===== UI Handler
+        /// <summary>設定其他玩家物件</summary>
+        private void SetupOtherPlayer()
+        {
+            nameInput.interactable = false;
+
+            GetComponent<Image>().color = OtherPlayerColor;
+
+            //依照 slot 設定對應顏色(這裡不做的話，會變成大家一進來都是同一種顏色)
+            if (playerColor == Color.white)
+                CmdColorChange(slot);
+
+            ChangeReadyButtonColor(NotReadyColor);
+
+            readyButton.transform.GetChild(0).GetComponent<Text>().text = "...";
+            readyButton.interactable = false;
+
+            OnClientReady(false);
+        }
+
+        #endregion
+
+        #region UI Handler
+
+        public void OnNameChanged(string str)
+        {
+            CmdNameChanged(str);
+        }
 
         //Note that those handler use Command function, as we need to change the value on the server not locally
         //so that all client get the new value throught syncvar
@@ -206,12 +232,15 @@ namespace UnityStandardAssets.Network
             SendReadyToBeginMessage();
         }
 
-        public void OnNameChanged(string str)
-        {
-            CmdNameChanged(str);
-        }
+        #endregion
 
-        //====== Server Command
+        #region Server Command
+
+        [Command]
+        public void CmdNameChanged(string name)
+        {
+            playerName = name;
+        }
 
         [Command]
         public void CmdColorChange(int idx)
@@ -219,10 +248,50 @@ namespace UnityStandardAssets.Network
             playerColor = Colors[idx];
         }
 
-        [Command]
-        public void CmdNameChanged(string name)
+        #endregion
+
+        #region Callback from sync var
+
+        public void OnMyName(string newName)
         {
-            playerName = name;
+            playerName = newName;
+            nameInput.text = playerName;
         }
+
+        public void OnMyColor(Color newColor)
+        {
+            playerColor = newColor;
+            colorButton.GetComponent<Image>().color = newColor;
+        }
+
+        #endregion
+
+        #region Test
+
+        [SyncVar(hook = "HookTest")]
+        private string testData = "";
+
+        private void OnTest()
+        {
+            if (!isLocalPlayer)
+                return;
+
+            string data = string.Format("{0}:{1}", playerName, System.DateTime.Now.Second.ToString());
+            CmdTest(data);
+        }
+
+        [Command]
+        private void CmdTest(string data)
+        {
+            testData = data;
+        }
+
+        private void HookTest(string data)
+        {
+            testData = data;
+            m_TestBtn.GetComponentInChildren<Text>().text = testData;
+        }
+
+        #endregion
     }
 }

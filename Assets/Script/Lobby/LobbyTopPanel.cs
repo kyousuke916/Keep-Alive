@@ -2,10 +2,16 @@
 using UnityEngine.UI;
 using System.Collections;
 
-namespace UnityStandardAssets.Network
+namespace Networking.Network
 {
     public class LobbyTopPanel : MonoBehaviour
     {
+        [SerializeField]
+        private LobbyManager m_LobbyManager;
+
+        [SerializeField]
+        private LobbyManagerUI m_LobbyManagerUI;
+
         [SerializeField]
         private Text m_StatusInfoTxt;
 
@@ -14,6 +20,9 @@ namespace UnityStandardAssets.Network
 
         [SerializeField]
         private Button m_BackBtn;
+
+        [SerializeField]
+        private Button m_TestBtn;
 
         public bool isInGame = false;
 
@@ -24,12 +33,26 @@ namespace UnityStandardAssets.Network
         {
             panelImage = GetComponent<Image>();
 
-            m_BackBtn.onClick.AddListener(OnBack);
+            m_BackBtn.gameObject.SetActive(false);
+
+            m_BackBtn.onClick.AddListener(m_LobbyManagerUI.GoBackButton);
+            m_TestBtn.onClick.AddListener(OnTest);
         }
 
         void OnDestroy()
         {
-            m_BackBtn.onClick.RemoveListener(OnBack);
+            m_BackBtn.onClick.RemoveListener(m_LobbyManagerUI.GoBackButton);
+            m_TestBtn.onClick.RemoveListener(OnTest);
+        }
+
+        private void OnTest()
+        {
+            Debug.Log("numPlayers:" + m_LobbyManager.numPlayers);
+        }
+
+        public void ShowBackBtn(bool show)
+        {
+            m_BackBtn.gameObject.SetActive(show);
         }
 
         /*void Update()
@@ -42,11 +65,6 @@ namespace UnityStandardAssets.Network
                 ToggleVisibility(!isDisplayed);
             }
         }*/
-
-        private void OnBack()
-        {
-
-        }
 
         public void StatusInfo(string status)
         {
@@ -63,14 +81,10 @@ namespace UnityStandardAssets.Network
             isDisplayed = visible;
 
             foreach (Transform t in transform)
-            {
                 t.gameObject.SetActive(isDisplayed);
-            }
 
             if (panelImage != null)
-            {
                 panelImage.enabled = isDisplayed;
-            }
         }
     }
 }

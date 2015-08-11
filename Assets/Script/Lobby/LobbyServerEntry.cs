@@ -5,7 +5,7 @@ using UnityEngine.Networking.Match;
 using UnityEngine.Networking.Types;
 using System.Collections;
 
-namespace UnityStandardAssets.Network
+namespace Networking.Network
 {
     public class LobbyServerEntry : MonoBehaviour
     {
@@ -29,10 +29,11 @@ namespace UnityStandardAssets.Network
 
         void JoinMatch(NetworkID networkID, LobbyManager lobbyManager)
         {
+            LobbyManagerUI.Instance.DisplayIsConnecting();
+            LobbyManagerUI.Instance.backDelegate = LobbyManagerUI.Instance.StopClientClbk;
+
             lobbyManager.matchMaker.JoinMatch(networkID, "", lobbyManager.OnMatchJoined);
-            //lobbyManager.backDelegate = lobbyManager.StopClientClbk;
             lobbyManager.isMatchmaking = true;
-            //lobbyManager.DisplayIsConnecting();
         }
     }
 }

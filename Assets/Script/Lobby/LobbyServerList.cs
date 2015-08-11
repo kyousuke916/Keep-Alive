@@ -4,7 +4,7 @@ using UnityEngine.Networking;
 using UnityEngine.Networking.Match;
 using System.Collections;
 
-namespace UnityStandardAssets.Network
+namespace Networking.Network
 {
     public class LobbyServerList : MonoBehaviour
     {

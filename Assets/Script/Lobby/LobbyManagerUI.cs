@@ -1,7 +1,7 @@
 ﻿using UnityEngine;
 using UnityEngine.UI;
 using System.Collections;
-using UnityStandardAssets.Network;
+using Networking.Network;
 using UnityEngine.Networking;
 using UnityEngine.Networking.Types;
 using UnityEngine.Networking.Match;
@@ -9,6 +9,8 @@ using UnityEngine.Networking.Match;
 public class LobbyManagerUI : MonoBehaviour
 {
     #region Field
+
+    public static LobbyManagerUI Instance;
 
     [SerializeField]
     private RectTransform mainMenuPanel;
@@ -19,7 +21,7 @@ public class LobbyManagerUI : MonoBehaviour
     [SerializeField]
     private RectTransform lobbyServerList;
 
-    //public LobbyInfoPanel infoPanel;
+    public LobbyInfoPanel infoPanel;
 
     [SerializeField]
     private RectTransform currentPanel;
@@ -39,17 +41,19 @@ public class LobbyManagerUI : MonoBehaviour
     [SerializeField]
     private LobbyTopPanel m_LobbyTopPanel;
 
+    public delegate void BackButtonDelegate();
+    public BackButtonDelegate backDelegate;
+
     #endregion
 
     #region Unity Event
 
     void Awake()
     {
+        Instance = this;
+
         currentPanel = mainMenuPanel;
-
-        //backButton.gameObject.SetActive(false);
-        //GetComponent<Canvas>().enabled = true;
-
+        
         SetServerInfo("Offline", "None");
 
         m_CreateBtn.onClick.AddListener(OnClickCreateMatchmakingGame);
@@ -63,6 +67,8 @@ public class LobbyManagerUI : MonoBehaviour
 
     void OnDestroy()
     {
+        Instance = null;
+
         m_CreateBtn.onClick.RemoveListener(OnClickCreateMatchmakingGame);
         m_ServerListBtn.onClick.RemoveListener(OnClickOpenServerList);
 
@@ -74,43 +80,65 @@ public class LobbyManagerUI : MonoBehaviour
 
     #endregion
 
+    #region Event - Button
+
     private void OnClickCreateMatchmakingGame()
     {
         m_LobbyManager.StartMatchMaker();
 
-        string matchName = m_RoonField.text;
-        uint matchSize = 3;
-        bool matchAdvertise = true;
-        string matchPassword = string.Empty;
+        NetworkMatch match = m_LobbyManager.matchMaker;
 
-        m_LobbyManager.matchMaker.CreateMatch(matchName, matchSize, matchAdvertise, matchPassword, m_LobbyManager.OnMatchCreate);
+        if (match == null)
+        {
+            Debug.LogError("m_LobbyManager.matchMaker == null");
+            return;
+        }
 
-        //m_LobbyManager.backDelegate = lobbyManager.StopHost;
-        //m_LobbyManager.isMatchmaking = true;
-        //m_LobbyManager.DisplayIsConnecting();
+        var matchName = m_RoonField.text;
+        var matchSize = 3u;
+        var matchAdvertise = true;
+        var matchPassword = string.Empty;
+
+        var request = new CreateMatchRequest();
+        request.name = matchName;
+        request.size = matchSize;
+        request.advertise = matchAdvertise;
+        request.password = matchPassword;
+
+        match.CreateMatch(request, m_LobbyManager.OnMatchCreate);
+        //match.CreateMatch(matchName, matchSize, matchAdvertise, matchPassword, m_LobbyManager.OnMatchCreate);
+
+        m_LobbyManager.isMatchmaking = true;
+
+        DisplayIsConnecting();
+
+        backDelegate = m_LobbyManager.StopHost;
 
         SetServerInfo("Matchmaker Host", m_LobbyManager.matchHost);
     }
 
+    #endregion
+
+    #region Event - LobbyManager
 
     private void OnUNetStartHost()
     {
-        Debug.Log("OnUNetStartHost");
+        //Debug.Log("OnUNetStartHost");
 
         ChangeTo(lobbyPanel);
-        //backDelegate = StopHostClbk;
+        backDelegate = StopHostClbk;
         SetServerInfo("Hosting", m_LobbyManager.networkAddress);
     }
 
     private void OnUNetClientConnect()
     {
-        m_LobbyTopPanel.gameObject.SetActive(false);
+        infoPanel.gameObject.SetActive(false);
 
         if (!NetworkServer.active)
         {
             //only to do on pure client (not self hosting client)
             ChangeTo(lobbyPanel);
-            //backDelegate = StopClientClbk;
+            backDelegate = StopClientClbk;
             SetServerInfo("Client", m_LobbyManager.networkAddress);
         }
     }
@@ -122,8 +150,7 @@ public class LobbyManagerUI : MonoBehaviour
 
         if (Application.loadedLevelName == m_LobbyManager.lobbyScene)
         {
-            //if (m_LobbyTopPanel.isInGame)
-            if (true)
+            if (m_LobbyTopPanel.isInGame)
             {
                 ChangeTo(lobbyPanel);
 
@@ -131,22 +158,22 @@ public class LobbyManagerUI : MonoBehaviour
                 {
                     if (conn.playerControllers[0].unetView.isServer)
                     {
-                        //backDelegate = StopHostClbk;
+                        backDelegate = StopHostClbk;
                     }
                     else
                     {
-                        //backDelegate = StopClientClbk;
+                        backDelegate = StopClientClbk;
                     }
                 }
                 else
                 {
                     if (conn.playerControllers[0].unetView.isClient)
                     {
-                        //backDelegate = StopHostClbk;
+                        backDelegate = StopHostClbk;
                     }
                     else
                     {
-                        //backDelegate = StopClientClbk;
+                        backDelegate = StopClientClbk;
                     }
                 }
             }
@@ -164,53 +191,65 @@ public class LobbyManagerUI : MonoBehaviour
 
             Destroy(GameObject.Find("MainMenuUI(Clone)"));
 
-            //backDelegate = StopGameClbk;
+            backDelegate = StopGameClbk;
             m_LobbyTopPanel.isInGame = true;
             m_LobbyTopPanel.ToggleVisibility(false);
         }
     }
 
+    #endregion
 
+    #region Other
 
+    public void DisplayIsConnecting()
+    {
+        var _this = this;
+        infoPanel.Display("Connecting...", "Cancel", () => { _this.backDelegate(); });
+    }
 
     public void ChangeTo(RectTransform newPanel)
     {
         if (currentPanel != null)
-        {
             currentPanel.gameObject.SetActive(false);
-        }
 
         if (newPanel != null)
-        {
             newPanel.gameObject.SetActive(true);
-        }
 
         currentPanel = newPanel;
 
         if (currentPanel != mainMenuPanel)
         {
-            //backButton.gameObject.SetActive(true);
+            m_LobbyTopPanel.ShowBackBtn(true);
         }
         else
         {
-            //backButton.gameObject.SetActive(false);
+            m_LobbyTopPanel.ShowBackBtn(false);
+
             SetServerInfo("Offline", "None");
+
             m_LobbyManager.isMatchmaking = false;
         }
     }
 
     public void SetServerInfo(string status, string host)
     {
-        Debug.Log(string.Format("SetServerInfo {0}:{1}", status, host));
+        //Debug.Log(string.Format("SetServerInfo {0}:{1}", status, host));
 
         m_LobbyTopPanel.StatusInfo(status);
         m_LobbyTopPanel.HostInfo(host);
     }
 
+    public void GoBackButton()
+    {
+        if (backDelegate != null)
+            backDelegate();
+    }
 
-    // ----------------- Server management
+    #endregion
 
-    public void SimpleBackClbk()
+    #region Server Management
+
+    private void SimpleBackClbk()
     {
         ChangeTo(mainMenuPanel);
     }
@@ -239,18 +278,18 @@ public class LobbyManagerUI : MonoBehaviour
         }
     }
 
+    /// <summary>停止配桌，返回主畫面</summary>
     public void StopClientClbk()
     {
         m_LobbyManager.StopClient();
 
         if (m_LobbyManager.isMatchmaking)
-        {
             m_LobbyManager.StopMatchMaker();
-        }
 
         ChangeTo(mainMenuPanel);
     }
 
+    /// <summary>停止 Server，返回主畫面</summary>
     public void StopServerClbk()
     {
         m_LobbyManager.StopServer();
@@ -258,18 +297,23 @@ public class LobbyManagerUI : MonoBehaviour
         ChangeTo(mainMenuPanel);
     }
 
+    /// <summary>停止遊戲，返回大廳</summary>
     public void StopGameClbk()
     {
         m_LobbyManager.SendReturnToLobby();
 
         ChangeTo(lobbyPanel);
     }
-
-
+    
+    /// <summary>開啟房間列表</summary>
     private void OnClickOpenServerList()
     {
         m_LobbyManager.StartMatchMaker();
-        //m_LobbyManager.backDelegate = lobbyManager.SimpleBackClbk;
+
+        backDelegate = SimpleBackClbk;
+
         ChangeTo(lobbyServerList);
     }
+
+    #endregion
 }
