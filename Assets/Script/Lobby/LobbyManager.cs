@@ -62,7 +62,7 @@ namespace Networking.Network
         /// <summary>Called on the server when a client is ready</summary>
         public override void OnServerReady(NetworkConnection conn)
         {
-            Debug.Log("== OnServerReady:" + conn);
+            Log("OnServerReady:" + conn);
 
             base.OnServerReady(conn);
 
@@ -72,7 +72,7 @@ namespace Networking.Network
         /// <summary>This hook is invoked when a host is started.</summary>
         public override void OnStartHost()
         {
-            Debug.Log("== OnStartHost");
+            Log("OnStartHost");
 
             base.OnStartHost();
 
@@ -83,9 +83,10 @@ namespace Networking.Network
         /// <summary>This is invoked when a match has been created.</summary>
         public override void OnMatchCreate(CreateMatchResponse matchInfo)
         {
+            Log("OnMatchCreate");
+
             base.OnMatchCreate(matchInfo);
 
-            Debug.Log("== OnMatchCreate");
             //Debug.Log("success:" + matchInfo.success);
             //Debug.Log("address:" + matchInfo.address);
             //Debug.Log("port:" + matchInfo.port);
@@ -106,7 +107,10 @@ namespace Networking.Network
         {
             //return base.OnLobbyServerCreateLobbyPlayer(conn, playerControllerId);
 
-            Debug.Log("== OnLobbyServerCreateLobbyPlayer");
+            Log("OnLobbyServerCreateLobbyPlayer");
+
+            //return null;
+
             //Debug.Log("conn:" + conn);
             //Debug.Log("playerControllerId:" + playerControllerId);
             Debug.Log("numPlayers:" + numPlayers);
@@ -133,7 +137,7 @@ namespace Networking.Network
         /// <summary>This causes the server to switch scenes and sets the networkSceneId</summary>
         public override void ServerChangeScene(string sceneName)
         {
-            Debug.Log("== ServerChangeScene:" + sceneName);
+            Log("ServerChangeScene:" + sceneName);
 
             base.ServerChangeScene(sceneName);
         }
@@ -141,7 +145,7 @@ namespace Networking.Network
         /// <summary>This is called on the server when a networked scene finishes loading</summary>
         public override void OnLobbyServerSceneChanged(string sceneName)
         {
-            Debug.Log("== OnLobbyServerSceneChanged:" + sceneName);
+            Log("OnLobbyServerSceneChanged:" + sceneName);
 
             base.OnLobbyServerSceneChanged(sceneName);
         }
@@ -149,27 +153,32 @@ namespace Networking.Network
         /// <summary>This is called on the server when it is told that a client has finished switching from the lobby scene to a game player scene.</summary>
         public override bool OnLobbyServerSceneLoadedForPlayer(GameObject lobbyPlayer, GameObject gamePlayer)
         {
-            Debug.Log("== OnLobbyServerSceneLoadedForPlayer =>" + lobbyPlayer + " : " + lobbyPlayer);
+            Log("OnLobbyServerSceneLoadedForPlayer =>" + lobbyPlayer + " : " + lobbyPlayer);
 
-            return base.OnLobbyServerSceneLoadedForPlayer(lobbyPlayer, gamePlayer);
+            return true;
+
+            //return base.OnLobbyServerSceneLoadedForPlayer(lobbyPlayer, gamePlayer);
         }
 
         /// <summary>This is called on the server when a client disconnects</summary>
         public override void OnLobbyServerDisconnect(NetworkConnection conn)
         {
+            Log("OnLobbyServerDisconnect:" + conn);
+
             for (int i = 0; i < numPlayers; ++i)
             {
                 LobbyPlayer p = lobbySlots[i] as LobbyPlayer;
 
                 if (p != null)
-                {
                     p.RpcToggleJoinButton(numPlayers >= minPlayer);
-                }
             }
         }
+
         /// <summary>Called on the client when connected to a server</summary>
         public override void OnClientConnect(NetworkConnection conn)
         {
+            Log("OnClientConnect:" + conn);
+
             base.OnClientConnect(conn);
 
             if (OnUNetClientConnect != null)
@@ -179,7 +188,7 @@ namespace Networking.Network
         /// <summary>Called on clients when a network error occurs.</summary>
         public override void OnClientError(NetworkConnection conn, int errorCode)
         {
-            Debug.Log("== OnClientError");
+            Log("OnClientError");
 
             //ChangeTo(mainMenuPanel);
             //infoPanel.Display("Cient error : " + (errorCode == 6 ? "timeout" : errorCode.ToString()), "Close", null);
@@ -192,7 +201,7 @@ namespace Networking.Network
         /// <summary>This is called on the client when the client is finished loading a new networked scene</summary>
         public override void OnLobbyClientSceneChanged(NetworkConnection conn)
         {
-            Debug.Log("== OnLobbyClientSceneChanged:" + conn);
+            Log("OnLobbyClientSceneChanged:" + conn);
 
             if (OnUNetSceneChanged != null)
                 OnUNetSceneChanged(conn);
@@ -201,7 +210,7 @@ namespace Networking.Network
         /// <summary>Called on clients when a servers tells the client it is no longer ready</summary>
         public override void OnClientNotReady(NetworkConnection conn)
         {
-            Debug.Log("== OnClientNotReady:" + conn);
+            Log("OnClientNotReady:" + conn);
 
             base.OnClientNotReady(conn);
         }
@@ -215,6 +224,11 @@ namespace Networking.Network
                 StopMatchMaker();
                 StopHost();
             }
+        }
+
+        private static void Log(string data)
+        {
+            Debug.Log("L == " + data);
         }
     }
 }

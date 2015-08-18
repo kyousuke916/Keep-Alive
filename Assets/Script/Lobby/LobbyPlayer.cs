@@ -3,36 +3,43 @@ using UnityEngine.UI;
 using UnityEngine.Networking;
 using System.Collections;
 using System.Collections.Generic;
-//using System.Linq;
 
 namespace Networking.Network
 {
     public class LobbyPlayer : NetworkLobbyPlayer
     {
-        #region Field 
+        #region COLRO
 
-        static Color[] Colors = new Color[] { Color.red, Color.magenta, Color.cyan, Color.blue, Color.green, Color.yellow };
+        private static Color NORMAL_COLOR = Color.white;
+        private static Color JOIN_COLOR = new Color(255.0f / 255.0f, 0.0f, 101.0f / 255.0f, 1.0f);
+        private static Color NOT_READY_COLOR = new Color(34.0f / 255.0f, 44 / 255.0f, 55.0f / 255.0f, 1.0f);
+        private static Color READY_COLOR = new Color(0.0f, 204.0f / 255.0f, 204.0f / 255.0f, 1.0f);
+        private static Color TRANSPARENT_COLOR = new Color(0f, 0f, 0f, 0f);
 
-        public Button colorButton;
-        public InputField nameInput;
-        public Button readyButton;
-        public Button waitingPlayerButton;
-        public Button m_TestBtn;
+        private static Color OTHER_PLAYER_COLOR = new Color(250.0f / 255.0f, 250.0f / 255.0f, 250.0f / 255.0f, 1.0f);
+        private static Color LOCAL_PLAYER_COLOR = new Color(180.0f / 255.0f, 180.0f / 255.0f, 180.0f / 255.0f, 1.0f);
 
-        //OnMyName function will be invoked on clients when server change the value of playerName
-        [SyncVar(hook = "OnMyName")]
-        public string playerName = "";
+        #endregion
 
-        [SyncVar(hook = "OnMyColor")]
-        public Color playerColor = Color.white;
+        #region Field
 
-        static Color JoinColor = new Color(255.0f / 255.0f, 0.0f, 101.0f / 255.0f, 1.0f);
-        static Color NotReadyColor = new Color(34.0f / 255.0f, 44 / 255.0f, 55.0f / 255.0f, 1.0f);
-        static Color ReadyColor = new Color(0.0f, 204.0f / 255.0f, 204.0f / 255.0f, 1.0f);
-        static Color TransparentColor = new Color(0, 0, 0, 0);
+        [SerializeField]
+        private Button m_ColorButton;
 
-        static Color OtherPlayerColor = new Color(250.0f / 255.0f, 250.0f / 255.0f, 250.0f / 255.0f, 1.0f);
-        static Color LocalPlayerColor = new Color(180.0f / 255.0f, 180.0f / 255.0f, 180.0f / 255.0f, 1.0f);
+        [SerializeField]
+        private InputField m_NameInput;
+
+        [SerializeField]
+        private Button m_ReadyButton;
+
+        [SerializeField]
+        private Button m_WaitingPlayerButton;
+
+        private LobbyPlayerParam mParam;
+
+        private Text mColorButtonTxt;
+        private Text mReadyButtonTxt;
+        private Image mBackgroundImg;
 
         #endregion
 
@@ -40,12 +47,16 @@ namespace Networking.Network
 
         void Awake()
         {
-            m_TestBtn.onClick.AddListener(OnTest);
+            mParam = GetComponent<LobbyPlayerParam>();
+
+            mReadyButtonTxt = m_ReadyButton.GetComponentInChildren<Text>();
+            mColorButtonTxt = m_ColorButton.GetComponentInChildren<Text>();
+            mBackgroundImg = GetComponent<Image>();
         }
 
         void OnDestroy()
         {
-            m_TestBtn.onClick.RemoveListener(OnTest);
+            
         }
 
         #endregion
@@ -55,144 +66,39 @@ namespace Networking.Network
         /// <summary>Called when the client connects to a server</summary>
         public override void OnStartClient()
         {
-            Debug.Log("OnStartClient");
-            
+            Log("OnStartClient :" + readyToBegin);
+
+            ChangeReadyButtonColor(readyToBegin ? JOIN_COLOR : NOT_READY_COLOR);
+            ChangeReadyButtonText(readyToBegin ? "READY" : "...");
+
             //All networkbehaviour base function don't do anything
             //but NetworkLobbyPlayer redefine OnStartClient, so we need to call it here
             base.OnStartClient();
-
-            //setup the player data on UI. The value are SyncVar so the player
-            //will be created with the right value currently on server
-            OnMyName(playerName);
-            OnMyColor(playerColor);
-            HookTest(testData);
         }
 
-        /// <summary>This is a hook that is invoked on all player objects when entering the lobby</summary>
         public override void OnClientEnterLobby()
         {
-            Debug.Log("OnClientEnterLobby:" + isLocalPlayer);
+            name = string.Format("Player[{0}][{1}]", netId, slot);
 
-            base.OnClientEnterLobby();
+            Log("OnClientEnterLobby => " + name + " : " + readyToBegin);
 
             LobbyPlayerList._instance.AddPlayer(this);
             LobbyPlayerList._instance.DisplayDirectServerWarning(isServer && LobbyManager.s_Singleton.matchMaker == null);
 
-            //if we return from a game, color of text can still be the one for "Ready"
-            readyButton.transform.GetChild(0).GetComponent<Text>().color = Color.white;
+            ChangeColorButtonText(string.Format("[{0}][{1}]", slot, netId));
 
-            if (isLocalPlayer)
-            {
-                SetupLocalPlayer();
-            }
-            else
-            {
-                SetupOtherPlayer();
-            }
+            ChangeNameInputInteractable(false);
 
-            //setup the player data on UI. The value are SyncVar so the player
-            //will be created with the right value currently on server
-            OnMyName(playerName);
-            OnMyColor(playerColor);
-        }
-        
-        public override void OnClientReady(bool readyState)
-        {
-            Debug.Log("OnClientReady:" + readyState + " playerName => " + playerName);
+            //ChangeReadyButtonColor(readyToBegin ? JOIN_COLOR : NOT_READY_COLOR);
+            ChangeReadyButtonTextColor(NORMAL_COLOR);
+            //ChangeReadyButtonText(readyToBegin ? "READY" : "...");
+            ChangeReadyButtonInteractable(false);
 
-            if (readyState)
-            {
-                ChangeReadyButtonColor(TransparentColor);
+            ChangeBackgroundColor(OTHER_PLAYER_COLOR);
 
-                Text textComponent = readyButton.transform.GetChild(0).GetComponent<Text>();
-                textComponent.text = "READY";
-                textComponent.color = ReadyColor;
+            mParam.Refresh();
 
-                readyButton.interactable = isLocalPlayer;
-            }
-            else
-            {
-                ChangeReadyButtonColor(isLocalPlayer ? JoinColor : NotReadyColor);
-
-                Text textComponent = readyButton.transform.GetChild(0).GetComponent<Text>();
-                textComponent.text = isLocalPlayer ? "JOIN" : "...";
-                textComponent.color = Color.white;
-
-                readyButton.interactable = isLocalPlayer;
-            }
-        }
-
-        /// <summary>Called when the local player object has been set up</summary>
-        public override void OnStartLocalPlayer()
-        {
-            Debug.Log("OnStartLocalPlayer");
-
-            //if( (isServer && !NetworkServer.active) || (isClient && !LobbyManager.s_Singleton.client.isConnected))
-            //{//the server isn't started, rogue player, just delete it
-            //    Destroy(gameObject);
-            //    return;
-            //}
-
-            //have to use child count of player prefab already setup as "this.slot" is not set yet
-            if (playerName == "")
-                CmdNameChanged("Player" + LobbyPlayerList._instance.playerListContentTransform.childCount);
-
-            //we switch from simple name display to name input
-
-            nameInput.onEndEdit.RemoveAllListeners();
-            nameInput.onEndEdit.AddListener(OnNameChanged);
-
-            colorButton.onClick.RemoveAllListeners();
-            colorButton.onClick.AddListener(OnColorClicked);
-
-            readyButton.onClick.RemoveAllListeners();
-            readyButton.onClick.AddListener(OnReadyClicked);
-
-            SetupLocalPlayer();
-        }
-
-        #endregion
-
-        #region Other
-
-        public void RpcToggleJoinButton(bool enabled)
-        {
-            readyButton.gameObject.SetActive(enabled);
-            waitingPlayerButton.gameObject.SetActive(!enabled);
-        }
-
-        /// <summary>更新準備鈕顏色</summary>
-        private void ChangeReadyButtonColor(Color c)
-        {
-            ColorBlock b = readyButton.colors;
-            b.normalColor = c;
-            b.pressedColor = c;
-            b.highlightedColor = c;
-            b.disabledColor = c;
-
-            readyButton.colors = b;
-        }
-
-        /// <summary>設定本地玩家物件</summary>
-        private void SetupLocalPlayer()
-        {
-            nameInput.interactable = true;
-
-            GetComponent<Image>().color = LocalPlayerColor;
-
-            ChangeReadyButtonColor(JoinColor);
-
-            readyButton.transform.GetChild(0).GetComponent<Text>().text = "JOIN";
-            readyButton.interactable = true;
-        }
-
-        /// <summary>設定其他玩家物件</summary>
-        private void SetupOtherPlayer()
-        {
-            nameInput.interactable = false;
-
-            GetComponent<Image>().color = OtherPlayerColor;
-
+            /*
             //依照 slot 設定對應顏色(這裡不做的話，會變成大家一進來都是同一種顏色)
             if (playerColor == Color.white)
                 CmdColorChange(slot);
@@ -203,93 +109,142 @@ namespace Networking.Network
             readyButton.interactable = false;
 
             OnClientReady(false);
+            */
+        }
+
+        /// <summary>Called when the local player object has been set up</summary>
+        public override void OnStartLocalPlayer()
+        {
+            Log("OnStartLocalPlayer:" + netId);
+
+            //if( (isServer && !NetworkServer.active) || (isClient && !LobbyManager.s_Singleton.client.isConnected))
+            //{//the server isn't started, rogue player, just delete it
+            //    Destroy(gameObject);
+            //    return;
+            //}
+            
+            //have to use child count of player prefab already setup as "this.slot" is not set yet
+            if (mParam.RoleName == string.Empty)
+                mParam.CmdNameChanged("Player" + LobbyPlayerList._instance.playerListContentTransform.childCount);
+
+            ChangeBackgroundColor(LOCAL_PLAYER_COLOR);
+            ChangeNameInputInteractable(true);
+            ChangeReadyButtonText("JOIN");
+            ChangeReadyButtonInteractable(true);
+
+            m_NameInput.onEndEdit.RemoveAllListeners();
+            m_NameInput.onEndEdit.AddListener(OnNameChanged);
+
+            m_ColorButton.onClick.RemoveAllListeners();
+            m_ColorButton.onClick.AddListener(OnColorClicked);
+
+            m_ReadyButton.onClick.RemoveAllListeners();
+            m_ReadyButton.onClick.AddListener(OnReadyClicked);
+        }
+
+        public override void OnClientReady(bool readyState)
+        {
+            Log("OnClientReady:" + name + " : " + readyState);
+
+            if (readyState)
+            {
+                ChangeReadyButtonColor(TRANSPARENT_COLOR);
+                ChangeReadyButtonText("READY");
+                ChangeReadyButtonTextColor(READY_COLOR);
+            }
+            else
+            {
+                ChangeReadyButtonColor(isLocalPlayer ? JOIN_COLOR : NOT_READY_COLOR);
+                ChangeReadyButtonText(isLocalPlayer ? "JOIN" : "...");
+                ChangeReadyButtonTextColor(Color.white);
+            }
+
+            ChangeReadyButtonInteractable(isLocalPlayer);
+        }
+
+        #endregion
+
+        #region Other
+
+        public void RpcToggleJoinButton(bool enable)
+        {
+            Log(name + " RpcToggleJoinButton:" + enable);
+
+            m_ReadyButton.gameObject.SetActive(enable);
+
+            m_WaitingPlayerButton.gameObject.SetActive(!enable);
+        }
+
+        private void ChangeNameInputInteractable(bool interactable)
+        {
+            m_NameInput.interactable = interactable;
+        }
+        
+        private void ChangeReadyButtonColor(Color color)
+        {
+            ColorBlock cb = m_ReadyButton.colors;
+            cb.normalColor = color;
+            cb.pressedColor = color;
+            cb.highlightedColor = color;
+            cb.disabledColor = color;
+
+            m_ReadyButton.colors = cb;
+        }
+
+        private void ChangeColorButtonText(string text)
+        {
+            mColorButtonTxt.text = text;
+        }
+
+        private void ChangeReadyButtonText(string text)
+        {
+            mReadyButtonTxt.text = text;
+        }
+
+        private void ChangeReadyButtonTextColor(Color color)
+        {
+            mReadyButtonTxt.color = color;
+        }
+
+        private void ChangeReadyButtonInteractable(bool interactable)
+        {
+            m_ReadyButton.interactable = interactable;
+        }
+
+        private void ChangeBackgroundColor(Color color)
+        {
+            
         }
 
         #endregion
 
         #region UI Handler
 
-        public void OnNameChanged(string str)
+        private void OnNameChanged(string id)
         {
-            CmdNameChanged(str);
+            mParam.ChangeName(id);
         }
 
-        //Note that those handler use Command function, as we need to change the value on the server not locally
-        //so that all client get the new value throught syncvar
-        public void OnColorClicked()
+        private void OnColorClicked()
         {
-            int idx = System.Array.IndexOf(Colors, this.playerColor);
-
-            if (idx < 0) idx = 0;
-
-            idx = (idx + 1) % Colors.Length;
-
-            CmdColorChange(idx);
+            mParam.ChangeColor();
         }
 
-        public void OnReadyClicked()
+        private void OnReadyClicked()
         {
-            SendReadyToBeginMessage();
-        }
+            m_ReadyButton.onClick.RemoveAllListeners();
 
-        #endregion
-
-        #region Server Command
-
-        [Command]
-        public void CmdNameChanged(string name)
-        {
-            playerName = name;
-        }
-
-        [Command]
-        public void CmdColorChange(int idx)
-        {
-            playerColor = Colors[idx];
-        }
-
-        #endregion
-
-        #region Callback from sync var
-
-        public void OnMyName(string newName)
-        {
-            playerName = newName;
-            nameInput.text = playerName;
-        }
-
-        public void OnMyColor(Color newColor)
-        {
-            playerColor = newColor;
-            colorButton.GetComponent<Image>().color = newColor;
+            if (isLocalPlayer)
+                SendReadyToBeginMessage();
         }
 
         #endregion
 
         #region Test
 
-        [SyncVar(hook = "HookTest")]
-        private string testData = "";
-
-        private void OnTest()
+        private static void Log(string data)
         {
-            if (!isLocalPlayer)
-                return;
-
-            string data = string.Format("{0}:{1}", playerName, System.DateTime.Now.Second.ToString());
-            CmdTest(data);
-        }
-
-        [Command]
-        private void CmdTest(string data)
-        {
-            testData = data;
-        }
-
-        private void HookTest(string data)
-        {
-            testData = data;
-            m_TestBtn.GetComponentInChildren<Text>().text = testData;
+            Debug.Log("LP == " + data);
         }
 
         #endregion

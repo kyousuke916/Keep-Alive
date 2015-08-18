@@ -30,10 +30,22 @@ public class LobbyManagerUI : MonoBehaviour
     private InputField m_RoonField;
 
     [SerializeField]
+    public InputField m_IPInput;
+
+    [SerializeField]
     private Button m_CreateBtn;
 
     [SerializeField]
     private Button m_ServerListBtn;
+
+    [SerializeField]
+    private Button m_StartHostBtn;
+
+    [SerializeField]
+    private Button m_DedicatedServerBtn;
+
+    [SerializeField]
+    private Button m_JoinBtn;
 
     [SerializeField]
     private LobbyManager m_LobbyManager;
@@ -48,6 +60,17 @@ public class LobbyManagerUI : MonoBehaviour
 
     #region Unity Event
 
+    public void OnEnable()
+    {
+        m_LobbyTopPanel.ToggleVisibility(true);
+
+        m_IPInput.onEndEdit.RemoveAllListeners();
+        m_IPInput.onEndEdit.AddListener(onEndEditIP);
+
+        m_RoonField.onEndEdit.RemoveAllListeners();
+        m_RoonField.onEndEdit.AddListener(onEndEditGameName);
+    }
+
     void Awake()
     {
         Instance = this;
@@ -58,6 +81,9 @@ public class LobbyManagerUI : MonoBehaviour
 
         m_CreateBtn.onClick.AddListener(OnClickCreateMatchmakingGame);
         m_ServerListBtn.onClick.AddListener(OnClickOpenServerList);
+        m_StartHostBtn.onClick.AddListener(OnClickHost);
+        m_DedicatedServerBtn.onClick.AddListener(OnClickDedicated);
+        m_JoinBtn.onClick.AddListener(OnClickJoin);
 
         m_LobbyManager.OnUNetStartHost += OnUNetStartHost;
         m_LobbyManager.OnUNetClientConnect += OnUNetClientConnect;
@@ -71,6 +97,9 @@ public class LobbyManagerUI : MonoBehaviour
 
         m_CreateBtn.onClick.RemoveListener(OnClickCreateMatchmakingGame);
         m_ServerListBtn.onClick.RemoveListener(OnClickOpenServerList);
+        m_StartHostBtn.onClick.RemoveListener(OnClickHost);
+        m_DedicatedServerBtn.onClick.RemoveListener(OnClickDedicated);
+        m_JoinBtn.onClick.RemoveListener(OnClickJoin);
 
         m_LobbyManager.OnUNetStartHost -= OnUNetStartHost;
         m_LobbyManager.OnUNetClientConnect -= OnUNetClientConnect;
@@ -313,6 +342,52 @@ public class LobbyManagerUI : MonoBehaviour
         backDelegate = SimpleBackClbk;
 
         ChangeTo(lobbyServerList);
+    }
+
+    public void OnClickHost()
+    {
+        m_LobbyManager.StartHost();
+    }
+
+    public void OnClickDedicated()
+    {
+        ChangeTo(null);
+
+        m_LobbyManager.StartServer();
+
+        backDelegate = StopServerClbk;
+
+        SetServerInfo("Dedicated Server", m_LobbyManager.networkAddress);
+    }
+
+    public void OnClickJoin()
+    {
+        ChangeTo(lobbyPanel);
+        
+        m_LobbyManager.networkAddress = m_IPInput.text;
+        m_LobbyManager.StartClient();
+
+        backDelegate = StopClientClbk;
+
+        DisplayIsConnecting();
+
+        SetServerInfo("Connecting...", m_LobbyManager.networkAddress);
+    }
+
+    void onEndEditIP(string text)
+    {
+        if (Input.GetKeyDown(KeyCode.Return))
+        {
+            OnClickJoin();
+        }
+    }
+
+    void onEndEditGameName(string text)
+    {
+        if (Input.GetKeyDown(KeyCode.Return))
+        {
+            OnClickCreateMatchmakingGame();
+        }
     }
 
     #endregion

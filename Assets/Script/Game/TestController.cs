@@ -1,4 +1,4 @@
-﻿//#define DavidTest
+﻿#define DavidTest
 
 using UnityEngine;
 using System.Collections;
@@ -53,25 +53,6 @@ public class TestController : NetworkBehaviour
         }
     }
 
-    [Command]
-    private void CmdDoFire(int damage)
-    {
-        Debug.Log("DoFire:" + damage);
-    }
-
-    [ClientRpc]
-    private void RpcDoSomething(int damage)
-    {
-        Debug.Log("RpcDoSomething:" + damage);
-    }
-
-    [Server]
-    void TakeDamage(int damage)
-    {
-        if (EventTakeDamage != null)
-            EventTakeDamage(damage);
-    }
-
     public override void OnStartLocalPlayer()
     {
         Log("== OnStartLocalPlayer:" + netId);
@@ -112,9 +93,28 @@ public class TestController : NetworkBehaviour
         return base.OnCheckObserver(conn);
     }
 
+    [Command]
+    private void CmdDoFire(int damage)
+    {
+        Debug.Log("DoFire:" + damage);
+    }
+
+    [ClientRpc]
+    private void RpcDoSomething(int damage)
+    {
+        Debug.Log("RpcDoSomething:" + damage);
+    }
+
+    [Server]
+    void TakeDamage(int damage)
+    {
+        if (EventTakeDamage != null)
+            EventTakeDamage(damage);
+    }
+
     private void Log(string data)
     {
-        Debug.LogWarning(data);
+        //Debug.LogWarning(data);
     }
 
 #endif
