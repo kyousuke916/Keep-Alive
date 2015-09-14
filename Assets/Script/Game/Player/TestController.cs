@@ -9,17 +9,20 @@ using UnityEngine.Networking;
 public class TestController : NetworkBehaviour
 {
 #if DavidTest
+    //[SyncEvent(channel = 1)]
+    //public event TakeDamageDelegate EventTakeDamage;
+    //public delegate void TakeDamageDelegate(int damage);
 
-    public delegate void TakeDamageDelegate(int damage);
     public float speed = 10f;
     public float rotationSpeed = 100f;
 
-    [SyncEvent(channel = 1)]
-    public event TakeDamageDelegate EventTakeDamage;
+    private GamePlayer mGamePlayer;
 
     void Awake()
     {
         enabled = false;
+
+        mGamePlayer = GetComponent<GamePlayer>();
     }
 
     void Update()
@@ -31,6 +34,16 @@ public class TestController : NetworkBehaviour
         transform.Translate(0, 0, translation);
         transform.Rotate(0, rotation, 0);
 
+        //要另外用 Button 的方式使用技能
+        if (Input.GetKeyDown(KeyCode.Alpha1)) mGamePlayer.UseSkill(0);
+        if (Input.GetKeyDown(KeyCode.Alpha2)) mGamePlayer.UseSkill(1);
+        if (Input.GetKeyDown(KeyCode.Alpha3)) mGamePlayer.UseSkill(2);
+
+        mGamePlayer.SetCameraAngleX(Input.GetAxis("Mouse Y"));
+
+        //Debug.Log(string.Format("{0} / {1}", Input.GetAxis("Mouse X"), Input.GetAxis("Mouse Y")));
+
+        /*
         if (Input.GetKeyDown(KeyCode.Alpha1))
         {
             var damage = Random.Range(10, 50);
@@ -51,6 +64,7 @@ public class TestController : NetworkBehaviour
             Debug.Log("TakeDamage:damage:" + damage);
             TakeDamage(damage);
         }
+        */
     }
 
     public override void OnStartLocalPlayer()
@@ -92,7 +106,7 @@ public class TestController : NetworkBehaviour
 
         return base.OnCheckObserver(conn);
     }
-
+    /*
     [Command]
     private void CmdDoFire(int damage)
     {
@@ -111,7 +125,7 @@ public class TestController : NetworkBehaviour
         if (EventTakeDamage != null)
             EventTakeDamage(damage);
     }
-
+    */
     private void Log(string data)
     {
         //Debug.LogWarning(data);
