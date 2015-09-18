@@ -58,7 +58,8 @@ public class PlayerCam : MonoBehaviour
         if (mTargetTs == null)
             return;
 
-        mTs.position = mTargetTs.position + (mTargetTs.rotation * m_Offset);
+        mTs.LookAt(mTargetTs); 
+        //mTs.position = mTargetTs.position + (mTargetTs.rotation * m_Offset);
         //Debug.DrawLine(mTargetTs.position, mTs.position, Color.green);
     }
 

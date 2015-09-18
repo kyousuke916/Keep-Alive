@@ -5,6 +5,8 @@ public class GameManager : MonoBehaviour
 {
     public static GameManager Instance;
 
+    private MoveControlManager mMoveManger;
+
     void Awake()
     {
         Instance = this;

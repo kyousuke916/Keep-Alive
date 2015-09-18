@@ -33,7 +33,7 @@ public class GamePlayerSkill : NetworkBehaviour
         Debug.Log(string.Format("{0} 使用技能 {1}", name, index));
 
         //Test
-        var mat = transform.FindChild("Role/Sword").GetComponent<Renderer>().material;
+        var mat = transform.FindChild("Role/RightHand/Sword").GetComponent<Renderer>().material;
 
         switch (index)
         {

@@ -11,6 +11,8 @@ public class GamePlayer : NetworkBehaviour
 
     private PlayerCam mPlayerCam;
 
+    private PlayerController mPlayerController;
+
     void Awake()
     {
         enabled = false;
@@ -28,6 +30,8 @@ public class GamePlayer : NetworkBehaviour
 
         mPlayerSkill = GetComponent<GamePlayerSkill>();
         mPlayerSkill.Init(this);
+
+        mPlayerController = GetComponent<PlayerController>();
     }
 
     public override void OnStartLocalPlayer()
@@ -38,6 +42,9 @@ public class GamePlayer : NetworkBehaviour
         {
             mPlayerCam = PlayerCam.Instance;
             mPlayerCam.SetTarget(RoleFixedPoint.BodyTs);
+
+            mPlayerController.uiSet();
+            mPlayerController.Listencontroll = true;
         }
     }
 
