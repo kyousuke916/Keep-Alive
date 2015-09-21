@@ -28,6 +28,8 @@ public class PlayerController : NetworkBehaviour
 
     private float mTime;
 
+    private float mCameraPosYValue = 0f;
+
     private HitControlManager mHitManger;
     private MoveControlManager mMoveManger;
 
@@ -53,11 +55,17 @@ public class PlayerController : NetworkBehaviour
         mHitManger = mmm.GetComponentInChildren<HitControlManager>();
 
         mHitManger.OnHitAction += PlayerHitAction;
+        mHitManger.OnDragAction += FixPlayerCam;
     }
 
     private void PlayerHitAction(int action)
     {
         mGamePlayer.UseSkill(action);
+    }
+
+    private void FixPlayerCam(Vector2 value)
+    {
+        mCameraPosYValue = value.y;
     }
 
     void Update()
@@ -166,7 +174,7 @@ public class PlayerController : NetworkBehaviour
             PlayerRigidBody.velocity = Vector3.zero;
         }
 
-        mGamePlayer.SetCameraAngleX(Input.GetAxis("Mouse Y"));
+        mGamePlayer.SetCameraAngleX(mCameraPosYValue);
     }
 
     public override void OnStartLocalPlayer()

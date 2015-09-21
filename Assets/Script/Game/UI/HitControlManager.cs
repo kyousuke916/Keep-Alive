@@ -1,11 +1,12 @@
 ﻿using UnityEngine;
 using UnityEngine.UI;
-using System.Collections;
-
 using System;
-using UnityEngine.Events;
 
-public class HitControlManager : MonoBehaviour 
+using UnityEngine.Events;
+using UnityEngine.EventSystems;
+
+
+public class HitControlManager : MonoBehaviour, IDragHandler, IBeginDragHandler, IEndDragHandler
 {
     [SerializeField]
     private Button m_HitBtnA = null;
@@ -16,7 +17,12 @@ public class HitControlManager : MonoBehaviour
     [SerializeField]
     private Button m_HitBtnC = null;
 
+    [SerializeField]
+    private Button m_DragZone = null;
+
     public Action<int> OnHitAction;
+
+    public Action<Vector2> OnDragAction;
 
 	// Use this for initialization
 	void Start () 
@@ -31,4 +37,19 @@ public class HitControlManager : MonoBehaviour
     {
 	
 	}
+
+    public void OnBeginDrag(PointerEventData eventData)
+    {
+
+    }
+
+    public void OnDrag(PointerEventData eventData)
+    {
+        OnDragAction(eventData.delta.normalized);
+    }
+
+    public void OnEndDrag(PointerEventData eventData)
+    {
+        OnDragAction(Vector2.zero); 
+    }
 }
