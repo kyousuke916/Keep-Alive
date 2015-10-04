@@ -37,6 +37,8 @@ public class GamePlayer : NetworkBehaviour
     public override void OnStartLocalPlayer()
     {
         enabled = isLocalPlayer;
+        
+        Debug.LogFormat(name + " : " + isLocalPlayer);
 
         if (isLocalPlayer)
         {
@@ -45,6 +47,8 @@ public class GamePlayer : NetworkBehaviour
 
             mPlayerController.uiSet();
             mPlayerController.Listencontroll = true;
+
+            GameManager.SetLocalPlayer(gameObject);
         }
     }
 

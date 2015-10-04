@@ -36,6 +36,7 @@ namespace Networking.Network
         private Button m_WaitingPlayerButton;
 
         private LobbyPlayerParam mParam;
+        public LobbyPlayerParam Param { get { return mParam; } }
 
         private Text mColorButtonTxt;
         private Text mReadyButtonTxt;

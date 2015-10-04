@@ -151,13 +151,18 @@ namespace Networking.Network
         }
 
         /// <summary>This is called on the server when it is told that a client has finished switching from the lobby scene to a game player scene.</summary>
-        public override bool OnLobbyServerSceneLoadedForPlayer(GameObject lobbyPlayer, GameObject gamePlayer)
+        public override bool OnLobbyServerSceneLoadedForPlayer(GameObject lobbyPlayerGo, GameObject gamePlayerGo)
         {
-            Log("OnLobbyServerSceneLoadedForPlayer =>" + lobbyPlayer + " : " + lobbyPlayer);
+            Log("OnLobbyServerSceneLoadedForPlayer =>" + lobbyPlayerGo + " : " + gamePlayerGo);
+
+            LobbyPlayer lobbyPlayer = lobbyPlayerGo.GetComponent<LobbyPlayer>();
+            LobbyPlayerParam param = lobbyPlayer.Param;
+            
+            GameManager.AddPlayer(gamePlayerGo, lobbyPlayer, param);
 
             return true;
 
-            //return base.OnLobbyServerSceneLoadedForPlayer(lobbyPlayer, gamePlayer);
+            //return base.OnLobbyServerSceneLoadedForPlayer(lobbyPlayerGo, gamePlayerGo);
         }
 
         /// <summary>This is called on the server when a client disconnects</summary>

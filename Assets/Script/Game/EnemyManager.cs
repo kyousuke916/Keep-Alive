@@ -4,7 +4,6 @@ using System.Collections;
 
 public class EnemyManager : MonoBehaviour
 {
-
     public void BeginSpawnEnemy()
     {
         StartCoroutine(LoopSpawnEnemy());
