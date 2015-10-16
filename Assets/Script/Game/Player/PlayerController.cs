@@ -87,92 +87,13 @@ public class PlayerController : NetworkBehaviour
         right.y = 0;
         right.Normalize();
 
-        if (vertical > 0)
-        {
-            mVertiVelocity = forward * MoveSpeed;
-            if (distance.magnitude > Maxdistance)
-            {
-                /*
-                float originY = CameraSensorObj.transform.position.y;
-                Vector3 pos = Player.transform.position + distance.normalized * Maxdistance;
-                pos.y = originY;
-                CameraSensorObj.transform.position = pos;
-                */
-                float originY = MainCamera.transform.position.y;
-                Vector3 pos = Player.transform.position + distance.normalized * Maxdistance;
-                pos.y = originY;
-                MainCamera.transform.position = pos;
-            }
 
-            mIsVertiMove = true;
-        }
-        else if (vertical < 0)
-        {
-            mVertiVelocity = -forward * MoveSpeed;
-            if (CameraSensor.Counter <= 0)
-            {
-                /*
-                float originY = CameraSensorObj.transform.position.y;
-                Vector3 pos = Player.transform.position + distance.normalized * Maxdistance;
-                pos.y = originY;
-                CameraSensorObj.transform.position = pos;
-                */
-
-                float originY = MainCamera.transform.position.y;
-                Vector3 pos = Player.transform.position + distance.normalized * Maxdistance;
-                pos.y = originY;
-                MainCamera.transform.position = pos;
-            }
-
-            mIsVertiMove = true;
-        }
-        else
-        {
-            mIsVertiMove = false;
-        }
-
-        if (horizontal > 0)
-        {
-            mHoriVelocity = right * MoveSpeed;
-            mIsHoriMove = true;
-        }
-        else if (horizontal < 0)
-        {
-            mHoriVelocity = -right * MoveSpeed;
-            mIsHoriMove = true;
-        }
-        else
-        {
-            mIsHoriMove = false;
-        }
-
-        if (mIsHoriMove && mIsVertiMove)
-        {
-            PlayerRigidBody.velocity = mHoriVelocity + mVertiVelocity;
-        }
-        else if (mIsHoriMove)
-        {
-            PlayerRigidBody.velocity = mHoriVelocity;
-        }
-        else if (mIsVertiMove)
-        {
-            PlayerRigidBody.velocity = mVertiVelocity;
-        }
-
-        if (mIsHoriMove || mIsVertiMove)
-        {
-            float rotate = Mathf.Atan2(PlayerRigidBody.velocity.x, PlayerRigidBody.velocity.z);
-            Player.transform.rotation = Quaternion.Euler(0, rotate / Mathf.PI * 180, 0);
-            mTime = 0.1f;
-        }
-        if (mTime >= 0)
-        {
-            mTime -= Time.deltaTime;
-        }
-        else
-        {
-            PlayerRigidBody.velocity = Vector3.zero;
-        }
+        float translation = Input.GetAxis("Vertical") * 5;
+        float rotation = Input.GetAxis("Horizontal") * 5;
+        translation *= Time.deltaTime;
+        rotation *= Time.deltaTime;
+        transform.Translate(0, 0, translation);
+        transform.Rotate(0, rotation, 0);  
 
         mGamePlayer.SetCameraAngleX(mCameraPosYValue);
     }

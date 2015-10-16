@@ -58,8 +58,7 @@ public class PlayerCam : MonoBehaviour
         if (mTargetTs == null)
             return;
 
-        mTs.LookAt(mTargetTs); 
-        //mTs.position = mTargetTs.position + (mTargetTs.rotation * m_Offset);
+        mTs.position = mTargetTs.position + (mTargetTs.rotation * m_Offset);
         //Debug.DrawLine(mTargetTs.position, mTs.position, Color.green);
     }
 
@@ -67,14 +66,16 @@ public class PlayerCam : MonoBehaviour
     {
         if (mTargetTs == null)
             return;
-        
+
         mAngleX = Mathf.Clamp(mAngleX - angle, m_RaiseMin, m_RaiseMax);
 
         var eulerAngles = mTargetTs.rotation.eulerAngles;
 
         eulerAngles.x = mAngleX;
 
-        //mTs.rotation = Quaternion.Euler(eulerAngles);
+        mTs.rotation = Quaternion.Euler(eulerAngles);
+
+        /*
         if (mTs.transform.position.y >= 1f && mTs.transform.position.y <= 5f)
         {
             mTs.transform.position += new Vector3(0f, angle / 10f, 0f);
@@ -89,5 +90,6 @@ public class PlayerCam : MonoBehaviour
         {
             mTs.transform.position = new Vector3(mTs.transform.position.x, 5f, mTs.transform.position.z);
         }
+        */
     }
 }
