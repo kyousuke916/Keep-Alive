@@ -69,8 +69,8 @@ public class UIChat : MonoBehaviour
         PostChatMessage(msg);
 
         m_Input.text = "";
-        m_Input.ActivateInputField();
-        m_Input.Select();
+        //m_Input.ActivateInputField();
+        //m_Input.Select();
     }
 
     private void PostChatMessage(string msg)
@@ -95,4 +95,12 @@ public class UIChat : MonoBehaviour
         m_Chatline.text += string.Format("{0}{1}:{2}", prefix, nickname, msg);
         */
     }
+
+    /*void Update()
+    {
+        if (Input.GetKeyDown(KeyCode.Space))
+        {
+            InsertDialog(string.Format("Test:{0}", Time.time));
+        }
+    }*/
 }

@@ -10,20 +10,21 @@ public class PlayerManager
     public bool IsLocalPlayer { get; private set; }
     public GameObject PlayerGo { get; private set; }
     public int Slot { get; private set; }
-    public int ControllerId { get; private set; }
-    public NetworkIdentity NetworkIdentity { get; private set; }
     public string RoleName { get; private set; }
     public Color RoleColor { get; private set; }
 
-    public PlayerManager(GameObject playerGo, int slot, int controllerId, NetworkIdentity networkIdentity, string roleName, Color roleColor)
+    public GamePlayer GamePlayer { get; private set; }
+    public NetworkInstanceId NetID { get { return GamePlayer.netId; } }
+
+    public PlayerManager(GameObject playerGo, int slot, string roleName, Color roleColor)
     {
         IsLocalPlayer = false;
         PlayerGo = playerGo;
         Slot = slot;
-        ControllerId = controllerId;
-        NetworkIdentity = networkIdentity;
         RoleName = roleName;
         RoleColor = roleColor;
+
+        GamePlayer = PlayerGo.GetComponent<GamePlayer>();
     }
 
     public void SetLocalPlayer()

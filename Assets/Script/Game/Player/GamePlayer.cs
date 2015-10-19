@@ -48,7 +48,9 @@ public class GamePlayer : NetworkBehaviour
             mPlayerController.uiSet();
             mPlayerController.Listencontroll = true;
 
-            GameManager.SetLocalPlayer(gameObject);
+            //GameManager.SetLocalPlayer(gameObject, netId);
+
+            //GameManager.SetLocalParam(netId);
         }
     }
 
