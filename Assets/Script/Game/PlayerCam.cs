@@ -28,6 +28,24 @@ public class PlayerCam : MonoBehaviour
     private Transform mTs;
     private Transform mTargetTs;
 
+    private float mX;
+
+    private float mY;
+
+    public float x;
+
+    public float d = 8f;
+
+    public float y;
+
+    public float xSpeed = 50;
+
+    public float ySpeed = 1;
+
+    public Quaternion rotationEuler;
+
+    private Vector3 cameraPosition;
+
     void Awake()
     {
         mInstance = this;
@@ -58,8 +76,39 @@ public class PlayerCam : MonoBehaviour
         if (mTargetTs == null)
             return;
 
-        mTs.position = mTargetTs.position + (mTargetTs.rotation * m_Offset);
+        x += mX * xSpeed * Time.deltaTime;
+        //y -= mY * ySpeed * Time.deltaTime;
+
+        if (x > 360)
+        {
+            x -= 360;
+        }
+        else if (x < 0)
+        {
+            x += 360;
+        }
+
+        rotationEuler = Quaternion.Euler(10f, x, 0);
+
+        cameraPosition = rotationEuler * new Vector3(0, 0, -d) + mTargetTs.position;
+
+        transform.LookAt(mTargetTs);
+
+        transform.rotation = rotationEuler;
+
+        transform.position = cameraPosition;
+
+        //mTs.position = mTargetTs.position + (mTargetTs.rotation * m_Offset);
         //Debug.DrawLine(mTargetTs.position, mTs.position, Color.green);
+    }
+
+    public void MoveCamera(float x, float y)
+    {
+        if (mTargetTs == null)
+            return;
+
+        mX = x;
+        mY = y;
     }
 
     public void SetAngleX(float angle)

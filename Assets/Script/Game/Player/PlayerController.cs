@@ -6,12 +6,8 @@ using UnityEngine.Networking;
 
 public class PlayerController : NetworkBehaviour
 {
-    /// <summary> 攝影機碰撞器</summary>
-    public CollisionCounter CameraSensor;
-
-    public Camera MainCamera;
-
     public GameObject Player;
+
     public Rigidbody PlayerRigidBody;
 
     public Transform CameraPoint;
@@ -21,6 +17,7 @@ public class PlayerController : NetworkBehaviour
     public float MoveSpeed;
 
     private bool mIsHoriMove;
+
     private bool mIsVertiMove;
 
     private Vector3 mHoriVelocity;
@@ -30,10 +27,11 @@ public class PlayerController : NetworkBehaviour
 
     private float mCameraPosYValue = 0f;
 
-    private HitControlManager mHitManger;
-    private MoveControlManager mMoveManger;
-
     private GamePlayer mGamePlayer;
+
+    private float mX = 0f;
+
+    private float mY = 0f;
 
     public bool Listencontroll = false;
 
@@ -42,60 +40,27 @@ public class PlayerController : NetworkBehaviour
         enabled = false;
 
         mGamePlayer = GetComponent<GamePlayer>();
-
-        MainCamera = GameObject.Find("Main Camera").GetComponent<Camera>();
-
-        CameraSensor = MainCamera.GetComponent<CollisionCounter>();
-        
-    }
-    public void uiSet()
-    {
-        var mmm = GameObject.Instantiate(Resources.Load("Game/UI/UI_Prefab")) as GameObject;
-        mMoveManger = mmm.GetComponentInChildren<MoveControlManager>();
-        mHitManger = mmm.GetComponentInChildren<HitControlManager>();
-
-        mHitManger.OnHitAction += PlayerHitAction;
-        mHitManger.OnDragAction += FixPlayerCam;
-    }
-
-    private void PlayerHitAction(int action)
-    {
-        mGamePlayer.UseSkill(action);
-    }
-
-    private void FixPlayerCam(Vector2 value)
-    {
-        mCameraPosYValue = value.y;
     }
 
     void Update()
     {
-        if (!Listencontroll)
-            return;
+        float translation = mY * 10f;
 
-        float vertical = mMoveManger.Y;
-        float horizontal = mMoveManger.X;
+        float rotation = mX * 80f;
 
-        Vector3 forward = MainCamera.transform.forward;
-        forward.y = 0;
-        forward.Normalize();
-
-        Vector3 distance = (MainCamera.transform.position - Player.transform.position);
-        distance.y = 0;
-
-        Vector3 right = MainCamera.transform.right;
-        right.y = 0;
-        right.Normalize();
-
-
-        float translation = Input.GetAxis("Vertical") * 5;
-        float rotation = Input.GetAxis("Horizontal") * 5;
         translation *= Time.deltaTime;
-        rotation *= Time.deltaTime;
-        transform.Translate(0, 0, translation);
-        transform.Rotate(0, rotation, 0);  
 
-        mGamePlayer.SetCameraAngleX(mCameraPosYValue);
+        rotation *= Time.deltaTime;
+
+        transform.Translate(0, 0, translation);
+
+        transform.Rotate(0, rotation, 0);
+    }
+
+    public void Move(float x, float y)
+    {
+        mX = x;
+        mY = y;
     }
 
     public override void OnStartLocalPlayer()

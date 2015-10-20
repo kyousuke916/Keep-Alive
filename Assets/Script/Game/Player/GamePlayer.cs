@@ -32,6 +32,11 @@ public class GamePlayer : NetworkBehaviour
         mPlayerSkill.Init(this);
 
         mPlayerController = GetComponent<PlayerController>();
+
+        mPlayerCam = PlayerCam.Instance;
+        mPlayerCam.SetTarget(RoleFixedPoint.BodyTs);
+
+        UIManager.Instance.SetLocalPlayer(mPlayerController, mPlayerCam);
     }
 
     public override void OnStartLocalPlayer()
@@ -42,11 +47,13 @@ public class GamePlayer : NetworkBehaviour
 
         if (isLocalPlayer)
         {
+            /*
             mPlayerCam = PlayerCam.Instance;
             mPlayerCam.SetTarget(RoleFixedPoint.BodyTs);
 
             mPlayerController.uiSet();
             mPlayerController.Listencontroll = true;
+            */
 
             //GameManager.SetLocalPlayer(gameObject, netId);
 
