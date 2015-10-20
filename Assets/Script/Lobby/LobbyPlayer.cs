@@ -36,6 +36,7 @@ namespace Networking.Network
         private Button m_WaitingPlayerButton;
 
         private LobbyPlayerParam mParam;
+        public LobbyPlayerParam Param { get { return mParam; } }
 
         private Text mColorButtonTxt;
         private Text mReadyButtonTxt;
@@ -74,6 +75,9 @@ namespace Networking.Network
             //All networkbehaviour base function don't do anything
             //but NetworkLobbyPlayer redefine OnStartClient, so we need to call it here
             base.OnStartClient();
+
+            //Debug.LogFormat("AAA= slot:{0} netId:{1} playerControllerId:{2}", slot, netId, playerControllerId);
+            mParam.SetSlot(slot);
         }
 
         public override void OnClientEnterLobby()
@@ -244,7 +248,7 @@ namespace Networking.Network
 
         private static void Log(string data)
         {
-            Debug.Log("LP == " + data);
+            //Debug.Log("LP == " + data);
         }
 
         #endregion

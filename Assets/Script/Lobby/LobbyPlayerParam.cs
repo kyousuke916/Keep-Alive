@@ -14,12 +14,22 @@ public class LobbyPlayerParam : NetworkBehaviour
     [SerializeField]
     private InputField m_NameInput;
 
-
     public void Refresh()
     {
         m_RoleImage.color = mRoleColor;
         m_NameInput.text = mRoleName;
     }
+
+    #region Slot
+
+    public int Slot { get; private set; }
+
+    public void SetSlot(int slot)
+    {
+        Slot = slot;
+    }
+
+    #endregion
 
     #region Role Color
 

@@ -57,12 +57,14 @@ namespace Networking.Network
 
         #endregion
 
+        #region For Lobby
+
         #region Override Server
 
         /// <summary>Called on the server when a client is ready</summary>
         public override void OnServerReady(NetworkConnection conn)
         {
-            Log("OnServerReady:" + conn);
+            Log("OnServerReady:{0}", conn);
 
             base.OnServerReady(conn);
 
@@ -87,14 +89,14 @@ namespace Networking.Network
 
             base.OnMatchCreate(matchInfo);
 
-            //Debug.Log("success:" + matchInfo.success);
-            //Debug.Log("address:" + matchInfo.address);
-            //Debug.Log("port:" + matchInfo.port);
-            //Debug.Log("accessTokenString:" + matchInfo.accessTokenString);
-            //Debug.Log("networkId:" + matchInfo.networkId);
-            //Debug.Log("nodeId:" + matchInfo.nodeId);
-            //Debug.Log("usingRelay:" + matchInfo.usingRelay);
-            //Debug.Log("extendedInfo:" + matchInfo.extendedInfo);
+            //Log("success:{0}", matchInfo.success);
+            //Log("address:{0}", matchInfo.address);
+            //Log("port:{0}", matchInfo.port);
+            //Log("accessTokenString:{0}" + matchInfo.accessTokenString);
+            //Log("networkId:{0}", matchInfo.networkId);
+            //Log("nodeId:{0}", matchInfo.nodeId);
+            //Log("usingRelay:{0}", matchInfo.usingRelay);
+            //Log("extendedInfo:{0}", matchInfo.extendedInfo);
 
             //NetworkID
             _currentMatchID = (System.UInt64)matchInfo.networkId;
@@ -110,10 +112,10 @@ namespace Networking.Network
             Log("OnLobbyServerCreateLobbyPlayer");
 
             //return null;
-
-            //Debug.Log("conn:" + conn);
-            //Debug.Log("playerControllerId:" + playerControllerId);
-            Debug.Log("numPlayers:" + numPlayers);
+            
+            //Log("conn:{0}", conn);
+            //Log("playerControllerId:{0}", playerControllerId);
+            //Log("numPlayers:{0}", numPlayers);
 
             GameObject obj = Instantiate(lobbyPlayerPrefab.gameObject) as GameObject;
 
@@ -137,7 +139,7 @@ namespace Networking.Network
         /// <summary>This causes the server to switch scenes and sets the networkSceneId</summary>
         public override void ServerChangeScene(string sceneName)
         {
-            Log("ServerChangeScene:" + sceneName);
+            Log("ServerChangeScene:{0}", sceneName);
 
             base.ServerChangeScene(sceneName);
         }
@@ -145,25 +147,39 @@ namespace Networking.Network
         /// <summary>This is called on the server when a networked scene finishes loading</summary>
         public override void OnLobbyServerSceneChanged(string sceneName)
         {
-            Log("OnLobbyServerSceneChanged:" + sceneName);
+            Log("OnLobbyServerSceneChanged:{0}", sceneName);
 
             base.OnLobbyServerSceneChanged(sceneName);
         }
 
         /// <summary>This is called on the server when it is told that a client has finished switching from the lobby scene to a game player scene.</summary>
-        public override bool OnLobbyServerSceneLoadedForPlayer(GameObject lobbyPlayer, GameObject gamePlayer)
+        public override bool OnLobbyServerSceneLoadedForPlayer(GameObject lobbyPlayerGo, GameObject gamePlayerGo)
         {
-            Log("OnLobbyServerSceneLoadedForPlayer =>" + lobbyPlayer + " : " + lobbyPlayer);
+            Log("OnLobbyServerSceneLoadedForPlayer =>" + lobbyPlayerGo + " : " + gamePlayerGo);
+
+            LobbyPlayer lobbyPlayer = lobbyPlayerGo.GetComponent<LobbyPlayer>();
+            LobbyPlayerParam param = lobbyPlayer.Param;
+            
+            GameManager.AddPlayer(gamePlayerGo, lobbyPlayer, param);
 
             return true;
 
-            //return base.OnLobbyServerSceneLoadedForPlayer(lobbyPlayer, gamePlayer);
+            //return base.OnLobbyServerSceneLoadedForPlayer(lobbyPlayerGo, gamePlayerGo);
         }
+        
+        public override void OnServerAddPlayer(NetworkConnection conn, short playerControllerId)
+        {
+            base.OnServerAddPlayer(conn, playerControllerId);
 
+            Log("OnServerAddPlayer");
+            //Log("connectionId:{0}", conn.connectionId);
+            //Log("logNetworkMessages:{0}", conn.logNetworkMessages);
+        }
+        
         /// <summary>This is called on the server when a client disconnects</summary>
         public override void OnLobbyServerDisconnect(NetworkConnection conn)
         {
-            Log("OnLobbyServerDisconnect:" + conn);
+            Log("OnLobbyServerDisconnect:{0}", conn);
 
             for (int i = 0; i < numPlayers; ++i)
             {
@@ -177,7 +193,7 @@ namespace Networking.Network
         /// <summary>Called on the client when connected to a server</summary>
         public override void OnClientConnect(NetworkConnection conn)
         {
-            Log("OnClientConnect:" + conn);
+            Log("OnClientConnect:{0}", conn);
 
             base.OnClientConnect(conn);
 
@@ -198,10 +214,16 @@ namespace Networking.Network
 
         #region Override Client
 
+        public override void OnLobbyClientEnter()
+        {
+            Log("OnLobbyClientEnter");
+            base.OnLobbyClientEnter();
+        }
+
         /// <summary>This is called on the client when the client is finished loading a new networked scene</summary>
         public override void OnLobbyClientSceneChanged(NetworkConnection conn)
         {
-            Log("OnLobbyClientSceneChanged:" + conn);
+            Log("OnLobbyClientSceneChanged:{0}", conn);
 
             if (OnUNetSceneChanged != null)
                 OnUNetSceneChanged(conn);
@@ -210,7 +232,7 @@ namespace Networking.Network
         /// <summary>Called on clients when a servers tells the client it is no longer ready</summary>
         public override void OnClientNotReady(NetworkConnection conn)
         {
-            Log("OnClientNotReady:" + conn);
+            Log("OnClientNotReady:{0}", conn);
 
             base.OnClientNotReady(conn);
         }
@@ -226,10 +248,35 @@ namespace Networking.Network
             }
         }
 
-        private static void Log(string data)
+        #endregion
+
+        #region For Game
+
+        public override GameObject OnLobbyServerCreateGamePlayer(NetworkConnection conn, short playerControllerId)
         {
-            Debug.Log("L == " + data);
+            Log("OnLobbyServerCreateGamePlayer");
+            Log("connectionId:{0}", conn.connectionId);
+            Log("playerControllerId:{0}", playerControllerId);
+
+            return Instantiate<GameObject>(gamePlayerPrefab);
         }
+        
+        #endregion
+
+        #region Debug
+
+        //private static void Log(string data)
+        //{
+        //    Debug.Log("L == " + data);
+        //}
+
+        private static void Log(string format, params object[] args)
+        {
+            Debug.LogFormat(string.Format("LM:{0}", format), args);
+        }
+
+        #endregion
+
     }
 }
 
