@@ -15,7 +15,6 @@ public class EnemyManager : MonoBehaviour
         while (true)
         {
             SpawnEnemy();
-
             yield return new WaitForSeconds(1f);
         }
     }

@@ -39,7 +39,6 @@ public class GameManager : NetworkBehaviour
     public override void OnStartServer()
     {
         //base.OnStartServer();
-
         //StartGame();
     }
 

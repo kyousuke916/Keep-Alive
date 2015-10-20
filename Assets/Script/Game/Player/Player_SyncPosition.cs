@@ -37,7 +37,6 @@ public class Player_SyncPosition : NetworkBehaviour
         mTs = transform;
 
         //nClient = Networking.Network.LobbyManager.s_Singleton.client;
-
         mLerpRate = mNormalLerpRate;
     }
 
