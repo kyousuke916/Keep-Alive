@@ -2,8 +2,14 @@
 using System.Collections;
 using System.Collections.Generic;
 using Facebook.Unity;
+using UnityEngine.UI;
 
-public class Menu : MonoBehaviour {
+public class Menu : MonoBehaviour 
+{
+	public Image headPhoto;
+	
+	public string _path = "https://graph.facebook.com/";
+	public string _picture = "/picture?type=large";
 
 	public void FaceBookLogin()
 	{
@@ -11,8 +17,6 @@ public class Menu : MonoBehaviour {
 		FB.LogInWithReadPermissions(perms, AuthCallback);
 
 	}
-
-
 
 	// Awake function from Unity's MonoBehavior
 	void Awake ()
@@ -60,11 +64,23 @@ public class Menu : MonoBehaviour {
 				Debug.Log(perm);
 			}
 
-			Application.LoadLevel ("Lobby");
+			StartCoroutine("LoadPicture", aToken.UserId);
+
+			//Application.LoadLevel ("Lobby");
 		} else {
 			Debug.Log("User cancelled login");
 		}
 	}
-	
+
+	IEnumerator LoadPicture(string id)
+	{
+		WWW www = new WWW (_path + id + _picture);
+
+		Debug.Log("head:"+www.url);
+
+		yield return www;
+		headPhoto.sprite = Sprite.Create(www.texture, new Rect(0,0, www.texture.width, www.texture.height), new Vector2());
+		headPhoto.color = new Color (255, 255, 255, 255);
+	}
 
 }
